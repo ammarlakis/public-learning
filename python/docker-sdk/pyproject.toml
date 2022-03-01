@@ -7,6 +7,7 @@ authors = ["Ammar Lakis <ammar.lakis@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.9"
 docker = "^5.0.3"
+dockerfile-parse = "^1.2.0"
 
 [tool.poetry.dev-dependencies]
 
