@@ -14,10 +14,20 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to %s!", r.Host)
 }
 
+func slowHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Processing slow requests ...")
+	time.Sleep(10 * time.Second)
+	fmt.Fprintf(w, "Welcome to %s!", r.Host)
+}
+
 func main() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", handler)
+	mux.HandleFunc("/slow", slowHandler)
+
 	srv := &http.Server{
 		Addr:    ":8080",
-		Handler: http.HandlerFunc(handler),
+		Handler: mux,
 	}
 
 	// Channel to listen for OS signals
