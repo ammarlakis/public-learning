@@ -14,7 +14,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func deleteBucket(name string) {
+type deleteCmdInput struct {
+	name string
+}
+
+func deleteBucket(input *deleteCmdInput) {
 	timeoutErr := errors.New("Timeout")
 	ctx, cancel := context.WithTimeoutCause(context.Background(), 5*time.Second, timeoutErr)
 	defer cancel()
@@ -27,7 +31,7 @@ func deleteBucket(name string) {
 	s3client := s3.NewFromConfig(cfg)
 
 	_, err = s3client.DeleteBucket(ctx, &s3.DeleteBucketInput{
-		Bucket: &name,
+		Bucket: &input.name,
 	})
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
@@ -36,7 +40,7 @@ func deleteBucket(name string) {
 		log.Fatalf("Error deleting bucket: %v", err)
 	}
 
-	log.Printf("Bucket %s deleted successfully", name)
+	log.Printf("Bucket %s deleted successfully", input.name)
 
 }
 
@@ -51,11 +55,10 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		bucketName, err := cmd.Flags().GetString("name")
-		if err != nil {
-			log.Fatalf("Error reading flags: %v", err)
-		}
-		deleteBucket(bucketName)
+		name, _ := cmd.Flags().GetString("name")
+		deleteBucket(&deleteCmdInput{
+			name,
+		})
 	},
 }
 

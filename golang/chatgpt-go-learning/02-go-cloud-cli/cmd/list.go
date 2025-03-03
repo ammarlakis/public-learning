@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -14,6 +15,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/spf13/cobra"
 )
+
+type listCmdInput struct {
+	jsonOutput bool
+	timeout    int
+}
 
 // listCmd represents the list command
 var listCmd = &cobra.Command{
@@ -26,12 +32,17 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		listBuckets()
+		jsonOutput, _ := cmd.Flags().GetBool("json")
+		timeout, _ := cmd.Flags().GetInt("timeout")
+		listBuckets(&listCmdInput{
+			jsonOutput,
+			timeout,
+		})
 	},
 }
 
-func listBuckets() {
-	ctx, cancel := context.WithTimeoutCause(context.Background(), 1*time.Second, errors.New("Timeout"))
+func listBuckets(input *listCmdInput) {
+	ctx, cancel := context.WithTimeoutCause(context.Background(), time.Duration(input.timeout)*time.Second, errors.New("Timeout"))
 
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
@@ -51,13 +62,20 @@ func listBuckets() {
 
 	defer cancel()
 
-	fmt.Println("Buckets:")
-	for _, bucket := range result.Buckets {
-		fmt.Println(*bucket.Name)
+	if input.jsonOutput {
+		jsonData, _ := json.MarshalIndent(&result.Buckets, "", "  ")
+		fmt.Println(string(jsonData))
+	} else {
+		fmt.Println("Buckets:")
+		for _, bucket := range result.Buckets {
+			fmt.Println(*bucket.Name)
+		}
 	}
 }
 
 func init() {
+	listCmd.Flags().Bool("json", false, "Output in JSON format")
+	listCmd.Flags().IntP("timeout", "t", 10, "Timeout in seconds")
 	rootCmd.AddCommand(listCmd)
 
 	// Here you will define your flags and configuration settings.
